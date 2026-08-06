@@ -2,18 +2,20 @@ name: Daily Fire Reports Downloader
 
 on:
   schedule:
-    - cron: '0 16 * * 1'
-  workflow_dispatch: # Кнопка ручного запуска всё равно останется доступной в любой момент
+    - cron: '0 16 * * 1'  # Каждый понедельник в 16:00 UTC
+  workflow_dispatch:  # Ручной запуск
 
 jobs:
   run-parser:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Дает право записывать скачанные файлы обратно в репозиторий
+      contents: write  # Право на запись в репозиторий
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Полная история для правильного коммита
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -26,17 +28,49 @@ jobs:
         pip install requests beautifulsoup4
 
     - name: Run script
-      run: python download_fires.py
+      id: download
+      run: |
+        python download_fires.py
+        # Сохраняем результат для следующего шага
+        echo "pdf_count=$(ls -1 fire_reports/*.pdf 2>/dev/null | wc -l)" >> $GITHUB_OUTPUT
+      continue-on-error: false
+
+    - name: Debug - List files
+      run: |
+        echo "Содержимое fire_reports:"
+        ls -la fire_reports/ || echo "Директория пуста или не существует"
+        echo "Содержимое корневой директории:"
+        ls -la
 
     - name: Commit and Push changes
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@://github.com"
-        git add fire_reports/
-        # Проверяем, появились ли новые файлы, чтобы избежать пустых коммитов
-        if git diff --cached --quiet; then
-          echo "No new PDF files discovered today."
-        else
-          git commit -m "Автоматическое обновление: добавлены новые отчеты о возгораниях"
-          git push
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Проверяем, есть ли изменения
+        if [ -z "$(git status --porcelain)" ]; then
+          echo "📭 Нет новых изменений для коммита"
+          exit 0
         fi
+        
+        git add fire_reports/ debug_page.html 2>/dev/null || true
+        git status
+        
+        if git diff --cached --quiet; then
+          echo "📭 Нет новых файлов для коммита"
+        else
+          git commit -m "🤖 Автоматическое обновление: добавлены новые отчеты о возгораниях"
+          git push
+          echo "✅ Изменения запушены в репозиторий"
+        fi
+
+    - name: Upload debug artifacts (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-files
+        path: |
+          debug_page.html
+          debug_*.html
+          fire_reports/
+        retention-days: 7
