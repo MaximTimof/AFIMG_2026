@@ -2,10 +2,8 @@ name: Daily Fire Reports Downloader
 
 on:
   schedule:
-    # Запуск каждый день в 15:00 UTC (18:00 по МСК). 
-    # Время можно изменить. Обратите внимание: у GitHub Actions бывают задержки запуска до 15-30 минут.
-    - cron: '0 15 * * *'
-  workflow_dispatch: # Позволяет запускать скрипт вручную кнопкой в интерфейсе GitHub
+    - cron: '0 16 * * 1'
+  workflow_dispatch: # Кнопка ручного запуска всё равно останется доступной в любой момент
 
 jobs:
   run-parser:
