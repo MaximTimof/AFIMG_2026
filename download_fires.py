@@ -7,20 +7,18 @@ from datetime import datetime
 DOWNLOAD_DIR = "fire_reports"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-# Базовая ссылка сайта для скачивания (подставьте точный URL, если он отличается)
-BASE_FILE_URL = "http://planet.iitp.ru" 
+# Изменено по вашему запросу: правильный базовый домен сайта
+BASE_FILE_URL = "http://planet.iitp.ru/" 
 
 def get_target_url():
-    # Автоматически берет текущую дату
     current_date = datetime.now().strftime("%Y-%m-%d")
-    return f"http://planet.iitp.ru{current_date}&region=all"
+    return f"http://planet.iitp.ru/{current_date}&region=all"
 
 def download_new_pdfs():
     url = get_target_url()
     print(f"Проверка страницы: {url}")
     
     try:
-        # User-Agent, чтобы сайт не блокировал запросы от GitHub
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
@@ -31,16 +29,28 @@ def download_new_pdfs():
     soup = BeautifulSoup(response.text, 'html.parser')
     pdf_count = 0
     
+    # Ищем все ссылки на странице
     for link in soup.find_all('a', href=True):
         href = link['href']
         
-        if href.endswith('.pdf'):
-            filename = os.path.basename(href)
+        # Очищаем href от возможных GET-параметров, чтобы вытащить имя файла
+        clean_href = href.split('?')[0]
+        filename = os.path.basename(clean_href)
+        
+        # Проверяем, что ссылка действительно ведет на PDF
+        if filename.endswith('.pdf'):
             local_path = os.path.join(DOWNLOAD_DIR, filename)
             
-            # Скачиваем только если файла еще нет в папке репозитория
+            # Скачиваем только новые файлы, которых еще нет в репозитории
             if not os.path.exists(local_path):
-                file_url = href if href.startswith('http') else BASE_FILE_URL + href
+                # Если ссылка относительная (например, "images/pdf/..."), склеиваем с базовым доменом
+                if href.startswith('http'):
+                    file_url = href
+                elif href.startswith('/'):
+                    file_url = BASE_FILE_URL + href.lstrip('/')
+                else:
+                    file_url = BASE_FILE_URL + href
+                    
                 print(f"Найден новый файл: {filename}. Скачивание...")
                 
                 try:
@@ -51,7 +61,7 @@ def download_new_pdfs():
                         print(f"Успешно скачан: {filename}")
                         pdf_count += 1
                     else:
-                        print(f"Не удалось скачать {filename} (Статус: {file_response.status_code})")
+                        print(f"Не удалось скачать {filename} (Статус сервера: {file_response.status_code})")
                 except Exception as e:
                     print(f"Ошибка при скачивании {filename}: {e}")
                     
