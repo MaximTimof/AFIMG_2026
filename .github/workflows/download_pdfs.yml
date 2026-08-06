@@ -1,4 +1,4 @@
-name: Daily Fire Reports Downloader
+name: Daily Fire Reports Downloader 2
 
 on:
   schedule:
