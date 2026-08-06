@@ -2,6 +2,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from urllib.parse import urljoin
 
 # Папка для сохранения PDF-файлов внутри репозитория
 DOWNLOAD_DIR = "fire_reports"
@@ -12,7 +13,7 @@ BASE_FILE_URL = "http://iitp.ru"
 
 def get_target_url():
     current_date = datetime.now().strftime("%Y-%m-%d")
-    return f"http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date=2026-01-01&end_date={current_date}&region=all"
+    return f"http://iitp.ru{current_date}&region=all"
 
 def download_new_pdfs():
     url = get_target_url()
@@ -47,8 +48,8 @@ def download_new_pdfs():
         
         # Скачиваем только те файлы, которых еще нет в репозитории
         if not os.path.exists(local_path):
-            # Собираем прямую ссылку на файл
-            file_url = BASE_FILE_URL + filename
+            # Безопасно собираем прямую ссылку на файл
+            file_url = urljoin(BASE_FILE_URL, filename)
             print(f"Обнаружен новый отчет: {filename}. Скачивание...")
             
             try:
