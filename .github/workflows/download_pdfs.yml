@@ -31,7 +31,7 @@ jobs:
       id: download
       run: |
         # Запускаем ваш скрипт (он сам создаст папку downloaded_pdfs)
-        python download_pdf.py
+        python download_fires.py
         
         # Считаем количество скачанных файлов для вывода в логи
         echo "pdf_count=$(ls -1 downloaded_pdfs/*.pdf 2>/dev/null | wc -l)" >> $GITHUB_OUTPUT
