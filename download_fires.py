@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
 # URL страницы со списком отчетов
-# меняю даты вручную чтобы не упало август, потом июль
-TARGET_URL = "http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date=2026-07-01&end_date=2026-07-31&region=all"
+# меняю даты вручную чтобы не упало август, потом июль, потом июнь
+TARGET_URL = "http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date=2026-06-01&end_date=2026-06-30&region=all"
 # Папка, куда будут сохраняться файлы
 OUTPUT_DIR = "downloaded_pdfs"
 
