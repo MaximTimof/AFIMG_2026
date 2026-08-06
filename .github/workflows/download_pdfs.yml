@@ -1,0 +1,72 @@
+name: Daily Fire Reports Downloader
+
+on:
+  schedule:
+    - cron: '0 16 * * 1'  # Каждый понедельник в 16:00 UTC
+  workflow_dispatch:  # Ручной запуск
+
+jobs:
+  run-parser:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Право на запись в репозиторий
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Полная история для правильного коммита
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests beautifulsoup4
+
+    - name: Run script
+      id: download
+      run: |
+        # Запускаем ваш скрипт (он сам создаст папку downloaded_pdfs)
+        python download_pdf.py
+        
+        # Считаем количество скачанных файлов для вывода в логи
+        echo "pdf_count=$(ls -1 downloaded_pdfs/*.pdf 2>/dev/null | wc -l)" >> $GITHUB_OUTPUT
+      continue-on-error: false
+
+    - name: Debug - List files
+      run: |
+        echo "Содержимое downloaded_pdfs:"
+        ls -la downloaded_pdfs/ || echo "Директория пуста или не существует"
+        echo "Содержимое корневой директории:"
+        ls -la
+
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@://github.com"
+        
+        # Проверяем, появились ли новые файлы в downloaded_pdfs
+        if [ -z "$(git status --porcelain downloaded_pdfs/)" ]; then
+          echo "📭 Нет новых файлов для коммита"
+          exit 0
+        fi
+        
+        git add downloaded_pdfs/
+        git status
+        
+        git commit -m "🤖 Автоматическое обновление: добавлены новые PDF-отчеты"
+        git push
+        echo "✅ Изменения запушены в репозиторий"
+
+    - name: Upload debug artifacts (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-files
+        path: |
+          downloaded_pdfs/
+        retention-days: 7
