@@ -2,17 +2,17 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-
+# http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date=2026-01-01&end_date=2026-08-06&region=all
 # Папка для сохранения PDF-файлов внутри репозитория
 DOWNLOAD_DIR = "fire_reports"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # Изменено по вашему запросу: правильный базовый домен сайта
-BASE_FILE_URL = "http://planet.iitp.ru/" 
+BASE_FILE_URL = "http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date=2026-01-01&end_date=" 
 
 def get_target_url():
     current_date = datetime.now().strftime("%Y-%m-%d")
-    return f"http://planet.iitp.ru/{current_date}&region=all"
+    return f"http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date=2026-01-01&end_date={current_date}&region=all"
 
 def download_new_pdfs():
     url = get_target_url()
