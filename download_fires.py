@@ -20,7 +20,7 @@ def download_new_pdfs():
     
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except requests.RequestException as e:
         print(f"Ошибка при запросе к сайту: {e}")
@@ -33,17 +33,17 @@ def download_new_pdfs():
     for link in soup.find_all('a', href=True):
         href = link['href']
         
-        # Очищаем href от возможных GET-параметров, чтобы вытащить имя файла
+        # Безопасно отрезаем GET-параметры (если они есть), получая строку
         clean_href = href.split('?')[0]
         filename = os.path.basename(clean_href)
         
-        # Проверяем, что ссылка действительно ведет на PDF
-        if filename.endswith('.pdf'):
+        # Проверяем, что ссылка ведет на PDF
+        if filename.lower().endswith('.pdf'):
             local_path = os.path.join(DOWNLOAD_DIR, filename)
             
             # Скачиваем только новые файлы, которых еще нет в репозитории
             if not os.path.exists(local_path):
-                # Если ссылка относительная (например, "images/pdf/..."), склеиваем с базовым доменом
+                # Корректно склеиваем ссылки
                 if href.startswith('http'):
                     file_url = href
                 elif href.startswith('/'):
