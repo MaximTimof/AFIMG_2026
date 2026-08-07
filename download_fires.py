@@ -2,10 +2,18 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from datetime import date, timedelta
 
 # URL страницы со списком отчетов
 # меняю даты вручную чтобы не упало август, потом июль, потом июнь, потом от января по май
-TARGET_URL = "http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date=2026-01-01&end_date=2026-05-31&region=all"
+# Получаем текущую дату по UTC и дату 7 дней назад
+
+end_date = date.today()
+start_date = end_date - timedelta(days=7)
+
+# Формируем итоговую ссылку
+TARGET_URL = f"http://planet.iitp.ru/index.php?page_type=oper_prod&page=fire_report&start_date={start_date}&end_date={end_date}&region=all"
+
 # Папка, куда будут сохраняться файлы
 OUTPUT_DIR = "downloaded_pdfs"
 
